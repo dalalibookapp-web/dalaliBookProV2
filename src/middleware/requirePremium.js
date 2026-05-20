@@ -13,11 +13,15 @@ function requirePremium(req, res, next) {
     [req.user.id]
   ).then(result => {
     const user = result.rows[0];
+
+   
  
     if (!user || user.account_type !== 'premium' || new Date(user.premium_expires_at) < new Date()) {
       return res.status(403).json({ error: 'This feature requires a premium account' });
     }
 
+     req.account_type = user.account_type
+    req.premium_expires_at = user.premium_expires_at
     next();
   }).catch(err => {
     return res.status(500).json({ error: 'Internal server error' });

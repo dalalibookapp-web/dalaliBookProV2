@@ -17,6 +17,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 
 // ── Routes ───────────────────────────────────────────────────────
@@ -30,10 +31,16 @@ app.get('/api/bootstrap',authMiddleware,requirePremium, async (req, res) => {
   try {
     const txRes = await pool.query('SELECT * FROM transactions WHERE broker_id = $1 ORDER BY created_at DESC', [req.user.id]);
     const partyRes = await pool.query('SELECT * FROM parties WHERE broker_id = $1', [req.user.id]);
-
+    
+     const isPremium = Boolean(
+  req.account_type === "premium" &&
+  new Date(req.premium_expires_at) > new Date()
+);
+console.log(isPremium)
     res.json({
       transactions: txRes.rows || [],
       party: partyRes.rows || [],
+      isPremium 
     });
 
   } catch (err) {
@@ -41,6 +48,10 @@ app.get('/api/bootstrap',authMiddleware,requirePremium, async (req, res) => {
     res.status(500).json({ error: 'Failed to bootstrap data' });
   }
 });
+
+
+
+
 
 // ── Health Check ─────────────────────────────────────────────────
 
